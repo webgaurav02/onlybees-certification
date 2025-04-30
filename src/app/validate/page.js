@@ -12,8 +12,16 @@ const ValidatePage = () => {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
 
-  const searchParams = useSearchParams()
-  const id = searchParams.get('id')
+  // const searchParams = useSearchParams()
+  // const id = searchParams.get('id')
+
+  const [id, setId] = useState(null);
+
+  useEffect(() => {
+    const params = new URLSearchParams(window.location.search);
+    const certId = params.get('id');
+    setId(certId);
+  }, []);
 
   useEffect(() => {
 
@@ -51,7 +59,7 @@ const ValidatePage = () => {
   if (error) {
     return (
       <div className="min-h-screen flex flex-col  gap-6 items-center justify-center bg-gray-100">
-         <Image 
+        <Image
           src={notFound}
           alt="Not Found"
           width={100}
@@ -65,7 +73,7 @@ const ValidatePage = () => {
   if (!certificate) {
     return (
       <div className="min-h-screen flex flex-col gap-6  items-center justify-center bg-gray-100">
-        <Image 
+        <Image
           src={notFound}
           alt="Not Found"
           width={100}
