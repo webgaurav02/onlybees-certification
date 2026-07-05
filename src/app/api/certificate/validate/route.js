@@ -1,21 +1,47 @@
 import connectMongo from '@/lib/mongodb';
 import Certificate from '@/models/Certificate';
+import { isValidCertId } from '@/lib/ids';
+
+export const runtime = 'nodejs';
+
+function json(body, status = 200) {
+  return new Response(JSON.stringify(body), {
+    status,
+    headers: { 'Content-Type': 'application/json' },
+  });
+}
+
+// Public, non-PII fields only. recipientEmail / storage keys are intentionally excluded.
+const PUBLIC_FIELDS =
+  'certId name certType issueDate documentUrl qrCodeUrl validationUrl status revokedAt revokeReason fileHash createdAt';
 
 export async function GET(req) {
-  await connectMongo();
   const { searchParams } = new URL(req.url);
-  const certId = searchParams.get('id'); // Renaming variable to certId
+  const certId = searchParams.get('id');
 
   if (!certId) {
-    return new Response(JSON.stringify({ success: false, message: "No ID provided" }), { status: 400 });
+    return json({ success: false, message: 'No certificate ID provided.' }, 400);
+  }
+  // Reject obviously malformed ids before touching the database.
+  if (!isValidCertId(certId)) {
+    return json({ success: false, message: 'Certificate not found.' }, 404);
   }
 
-  // Find the certificate by the certId field instead of _id
-  const cert = await Certificate.findOne({ certId });
+  await connectMongo();
+  const cert = await Certificate.findOne({ certId }).select(PUBLIC_FIELDS).lean();
 
   if (!cert) {
-    return new Response(JSON.stringify({ success: false, message: "Certificate not found" }), { status: 404 });
+    return json({ success: false, message: 'Certificate not found.' }, 404);
   }
 
-  return new Response(JSON.stringify({ success: true, certificate: cert }), { status: 200 });
+  const revoked = cert.status === 'revoked';
+  return json(
+    {
+      success: true,
+      valid: !revoked,
+      status: cert.status,
+      certificate: cert,
+    },
+    revoked ? 410 : 200
+  );
 }
