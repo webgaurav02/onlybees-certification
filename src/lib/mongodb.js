@@ -1,11 +1,5 @@
 import mongoose from 'mongoose';
 
-const MONGODB_URI = process.env.MONGODB_URI;
-
-if (!MONGODB_URI) {
-  throw new Error('Please define the MONGODB_URI environment variable inside .env.local');
-}
-
 let cached = global.mongoose;
 
 if (!cached) {
@@ -15,6 +9,13 @@ if (!cached) {
 async function connectMongo() {
   if (cached.conn) {
     return cached.conn;
+  }
+
+  // Checked at connect time (not module import) so the build/dev server can start
+  // even before the env is fully configured.
+  const MONGODB_URI = process.env.MONGODB_URI;
+  if (!MONGODB_URI) {
+    throw new Error('Please define the MONGODB_URI environment variable inside .env.local');
   }
 
   if (!cached.promise) {
