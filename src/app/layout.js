@@ -27,14 +27,14 @@ export default function RootLayout({ children }) {
       <body
         className={`${geistSans.variable} ${geistMono.variable} antialiased`}
       >
-        <Image 
+        {/* <Image 
           src={logo}
           alt="Onlybees Logo"
           width='0'
           height='0'
           sizes="100vw"
           className="md:w-[15svw] w-[40svw] fixed top-10 left-10"
-        />
+        /> */}
         {children}
       </body>
     </html>
